@@ -50,7 +50,7 @@ class ChatRoomController {
    async storeNewRoom ({ request, response }) {
     const req = request.all();
     const rules = {
-      // cs_name: "required|string",
+      location_id: "required|integer",
       user_id: "required|string",
     };
 
@@ -62,7 +62,7 @@ class ChatRoomController {
       });
     }
 
-    const cs = await User.findBy('name', req.cs_name);
+    const cs = await User.findBy('cs_region_id', req.location_id);
 
     if (cs) {
       const checkRoom = await ChatRoom
@@ -102,23 +102,23 @@ class ChatRoomController {
   }
 
   /**
-   * Get chat room for CS only.
+   * Get chat room by user id and status active.
    * if there is exist, will return room id.
    * POST method
    */
-   async joinRoom ({ request, response }) {
+   async checkRoomActive ({ request, response }) {
     const req = request.all();
-
-    const user = await User.findBy('name', req.user_id)
     
     const result = await ChatRoom
                       .query()
-                      .where('user_id', user.id)
-                      .where('cs_id', req.cs_id)
+                      .select('chat_rooms.id', 'chat_rooms.cs_id', 'users.name', 'chat_rooms.status')
+                      .where('user_id', req.user_id)
+                      .where('status', 'active')
+                      .innerJoin('users', 'chat_rooms.cs_id', 'users.id')
                       .fetch()
 
     if (result) {
-      return response.status(201).json({data: result});
+      return response.status(200).json({data: result});
     }
   }
 
@@ -156,6 +156,18 @@ class ChatRoomController {
     } else {
       return response.status(200).json({message: 'Room id not found'});
     }
+  }
+
+  /**
+   * Get all chatroom list. Return id and user_name.
+   * GET chatrooms/
+   */
+  async updateChatRoomStatus ({ request, response }) {
+    const req = request.all()
+    await ChatRoom.query().where('id', req.room_id)
+    .update({status: 'done'});
+    
+    return response.status(200).json({message: 'Updated'});
   }
 
 }

@@ -18,7 +18,7 @@ const Hash = use('Hash')
 Factory.blueprint('bot_user', async (faker) => {
   return {
     id: `${faker.string({ length: 20, alpha: true, numeric: true })}`,
-    name: "Bot",
+    name: "Gastiadi",
     email: "bot@bot.com",
     password: await Hash.make("bot_user"),
     role_id: 4,
@@ -46,6 +46,12 @@ Factory.blueprint('fake_customer_service', async (faker) => {
 })
 
 Factory.blueprint('user_role', async (faker, i, data) => {
+  return {
+    name: data.name,
+  }
+})
+
+Factory.blueprint('region', async (faker, i, data) => {
   return {
     name: data.name,
   }

@@ -1,6 +1,18 @@
 "use strict";
 const Message = use("App/Models/Message");
 const ChatRoom = use("App/Models/ChatRoom");
+const User = use("App/Models/User");
+
+const botMessages = [
+  'Halo, selamat datang di Gastiadi. Ada yang bisa kami bantu?',
+  'Dimana lokasi kejadian itu?',
+  'Bisakah Anda menceritakan kronologinya?',
+  'Bisakah Anda memberitahu kondisi terkini dari korban?',
+  'Apakah korban sudah mendapatkan pertolongan pertama?',
+  'Apakah Anda mengenal korban?',
+  'Bisakah Anda memberikan identitas dan alamat korban?',
+  'Ada lagi yang bisa kami bantu?',
+]
 
 const chatRoom = [];
 
@@ -9,13 +21,30 @@ class ChatController {
     this.socket = socket;
     this.request = request;
     console.log("user joined with %s socket id", socket.id);
-    socket.emit('connected', `user joined with ${socket.id} socket id`)
+    socket.emit('message', {
+      event: 'message', 
+      data: {
+        message: `user joined with ${socket.id} socket id`
+      }
+    })
+
+  }
+
+  async onInit_chat(data) {
+    const result = await ChatRoom
+    .query()
+    .select('chat_rooms.id', 'users.name', 'chat_rooms.status')
+    .where('cs_id', data.id)
+    .innerJoin('users', 'chat_rooms.user_id', 'users.id')
+    .fetch()
+
+    this.socket.emit('init_chat', result)
   }
 
   async onJoin_room(data) {
     const messageList = await Message
     .query()
-    .select('users.name', 'messages.message')
+    .select('messages.user_id', 'users.name', 'messages.message', 'messages.created_at')
     .innerJoin('users', 'messages.user_id', 'users.id')
     .where('chat_room_id', data.room_id)
     .fetch();
@@ -57,19 +86,62 @@ class ChatController {
 
   async onSend_message(data) {
     let user_sockets;
+    const bot = await User.findBy('name', 'Bot')
     chatRoom.map((room) => {
       if(room.room_id === data.room_id) {
         user_sockets = room.sockets_id;
       }
     })
 
-    const message = new Message();
-    message.chat_room_id = data.room_id;
-    message.user_id = data.user_id;
-    message.message = data.message;
-    await message.save();
+    if(data.bot_message > 0 && data.bot_message < 8) {
+      const message = new Message();
+      message.chat_room_id = data.room_id;
+      message.user_id = data.user_id;
+      message.message = data.message;
+      await message.save();
 
-    this.socket.emitTo("message", {name: data.name, message: data.message}, user_sockets);
+      // const message = new Message();
+      message.chat_room_id = data.room_id;
+      message.user_id = bot.id;
+      message.message = botMessages[data.bot_message + 1];
+      await message.save();
+    } else if (data.bot_message === 0) {
+      const message = new Message();
+      message.chat_room_id = data.room_id;
+      message.user_id = bot.id;
+      message.message = botMessages[data.bot_message];
+      await message.save();
+
+      // const message = new Message();
+      message.chat_room_id = data.room_id;
+      message.user_id = data.user_id;
+      message.message = data.message;
+      await message.save();
+    } else {
+      const message = new Message();
+      message.chat_room_id = data.room_id;
+      message.user_id = data.user_id;
+      message.message = data.message;
+      await message.save();
+    }
+
+    const messageList = await Message
+    .query()
+    .select('messages.user_id', 'users.name', 'messages.message', 'messages.created_at')
+    .innerJoin('users', 'messages.user_id', 'users.id')
+    .where('chat_room_id', data.room_id)
+    .fetch();
+
+    this.socket.emitTo('messages', messageList, user_sockets);
+    // this.socket.emitTo("message", {name: data.name, message: data.message}, user_sockets);
+  }
+
+  onMessage(message) {
+    console.log(message)
+    this.socket.broadcastToAll('message', {
+        message: `Terusan dari server ${message.body}`
+      }
+     )
   }
 
   onClose() {

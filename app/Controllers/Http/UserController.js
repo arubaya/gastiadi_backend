@@ -7,7 +7,6 @@ const Drive = use('Drive');
 const Helpers = use('Helpers')
 
 const User = use("App/Models/User");
-const Token = use("App/Models/Token");
 
 const Chance = use('chance')
 const { validate } = use("Validator");
@@ -90,14 +89,15 @@ class UserController {
    */
   async userDetail ({ params, response, auth }) {
     const id = params.id;
-    try {
-      await auth.check()
-      const result = await User.findBy('id', id);
-      return response.status(200).json(result);
-    } catch (error) {
-      response.json({message: 'Missing or invalid api token'})
-    }
-    
+    const result = await User.findBy('id', id);
+    return response.status(200).json(result);
+    // try {
+    //   await auth.check()
+    //   const result = await User.findBy('id', id);
+    //   return response.status(200).json(result);
+    // } catch (error) {
+    //   response.json({message: 'Missing or invalid api token'})
+    // }
   }
 
 

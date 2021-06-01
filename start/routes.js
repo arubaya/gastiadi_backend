@@ -86,7 +86,7 @@ Route.group(() => {
   /**
    * Route for join room
    */
-  Route.post('joinroom', 'ChatRoomController.joinRoom');
+  Route.post('checkroom', 'ChatRoomController.checkRoomActive');
 
   /**
    * Route for get all rooms. Return id and user_name
@@ -105,5 +105,15 @@ Route.group(() => {
    * Route for create new room
    */
    Route.get('messages/room/:id', 'MessageController.getMessagesByRoomId');
+
+  /**
+   * Route for get all regions
+   */
+  Route.get('regions', 'RegionController.index');
+
+  /**
+   * Route for get region by name return id
+   */
+  Route.post('region', 'RegionController.getRegionByName');
 
 }).prefix('api/v1')//.middleware('auth')

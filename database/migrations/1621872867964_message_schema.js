@@ -7,7 +7,7 @@ class MessageSchema extends Schema {
   up () {
     this.create('messages', (table) => {
       table.increments()
-      table.string('chat_room_id').references('id').inTable('chat_rooms').notNullable()
+      table.string('chat_room_id').references('id').inTable('chat_rooms').notNullable().onDelete('cascade')
       table.string('user_id').references('id').inTable('users').notNullable()
       table.string('message', 500).notNullable()
       table.timestamps()

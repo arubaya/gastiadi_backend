@@ -1,7 +1,6 @@
 "use strict";
 const Message = use("App/Models/Message");
 const ChatRoom = use("App/Models/ChatRoom");
-const User = use("App/Models/User");
 
 const botMessages = [
   'Halo, selamat datang di Gastiadi. Ada yang bisa kami bantu?',
@@ -38,7 +37,7 @@ class ChatController {
     .innerJoin('users', 'chat_rooms.user_id', 'users.id')
     .fetch()
 
-    this.socket.emit('init_chat', result)
+    this.socket.broadcastToAll('init_chat', result)
   }
 
   async onJoin_room(data) {
@@ -65,9 +64,10 @@ class ChatController {
             console.log(`${this.socket.id} join to room`)
           }
           noSameRoomId = false;
-          return true;
+          return noSameRoomId
         } else {
           noSameRoomId = true;
+          return noSameRoomId
         }
       })
     }
@@ -86,44 +86,17 @@ class ChatController {
 
   async onSend_message(data) {
     let user_sockets;
-    const bot = await User.findBy('name', 'Bot')
     chatRoom.map((room) => {
       if(room.room_id === data.room_id) {
         user_sockets = room.sockets_id;
       }
     })
 
-    if(data.bot_message > 0 && data.bot_message < 8) {
-      const message = new Message();
-      message.chat_room_id = data.room_id;
-      message.user_id = data.user_id;
-      message.message = data.message;
-      await message.save();
-
-      // const message = new Message();
-      message.chat_room_id = data.room_id;
-      message.user_id = bot.id;
-      message.message = botMessages[data.bot_message + 1];
-      await message.save();
-    } else if (data.bot_message === 0) {
-      const message = new Message();
-      message.chat_room_id = data.room_id;
-      message.user_id = bot.id;
-      message.message = botMessages[data.bot_message];
-      await message.save();
-
-      // const message = new Message();
-      message.chat_room_id = data.room_id;
-      message.user_id = data.user_id;
-      message.message = data.message;
-      await message.save();
-    } else {
-      const message = new Message();
-      message.chat_room_id = data.room_id;
-      message.user_id = data.user_id;
-      message.message = data.message;
-      await message.save();
-    }
+    const message = new Message();
+    message.chat_room_id = data.room_id;
+    message.user_id = data.user_id;
+    message.message = data.message;
+    await message.save();
 
     const messageList = await Message
     .query()

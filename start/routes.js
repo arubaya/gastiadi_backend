@@ -15,6 +15,7 @@
 
 /** @type {typeof import('@adonisjs/framework/src/Route/Manager')} */
 const Route = use('Route')
+const Helpers = use('Helpers')
 
 Route.get('/', () => {
   return { greeting: 'Hello world in JSON' }
@@ -28,6 +29,13 @@ Route.group(() => {
   Route.post('testuser', 'UserController.devIndex');
   Route.get('rooms', 'ChatRoomController.devIndex');
   Route.post('user', 'UserController.getUser')
+  Route.post('tryml', 'MessageController.tryML');
+  Route.get('/:filename', 'MessageController.model');
+
+  // Route.get('model', (response) => {
+  //   const modelPath = Helpers.resourcesPath('model.json')
+  //   return response.download(modelPath)
+  // });
 
   /**
    * Route for mobile phone API general user
